@@ -36,6 +36,7 @@ app.use("/api/tests", require("./routes/tests"));
 app.use("/api/progress", require("./routes/progress"));
 app.use("/api/flashcards", require("./routes/flashcards"));
 app.use("/api/news", require("./routes/news"));
+app.use("/api/videos", require("./routes/videos"));
 
 // ─── Эрүүл мэнд шалгах endpoint ───
 app.get("/api/health", (req, res) => {
