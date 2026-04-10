@@ -75,4 +75,58 @@ router.get("/random", auth, async (req, res) => {
   }
 });
 
+// ─── КАРТ НЭМЭХ (Admin) ───
+// POST /api/flashcards
+router.post("/", auth, async (req, res) => {
+  try {
+    const { deckId, deckName, section, difficulty, emoji, front, back, example, pronunciation } = req.body;
+    const card = await Flashcard.create({
+      deckId, deckName, section, difficulty,
+      emoji: emoji || "📝",
+      front, back,
+      example: example || null,
+      pronunciation: pronunciation || null,
+    });
+    res.status(201).json({ message: "Карт нэмэгдлээ!", card });
+  } catch (error) {
+    console.error("Карт нэмэх алдаа:", error);
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── DECK-ИЙН БҮХ КАРТУУДЫГ УСТГАХ ───
+// DELETE /api/flashcards/deck/:deckId
+router.delete("/deck/:deckId", auth, async (req, res) => {
+  try {
+    await Flashcard.deleteMany({ deckId: req.params.deckId });
+    res.json({ message: "Deck устгагдлаа!" });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── НЭГ КАРТ ЗАСАХ ───
+// PUT /api/flashcards/:id
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const card = await Flashcard.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!card) return res.status(404).json({ error: "Карт олдсонгүй" });
+    res.json({ message: "Карт шинэчлэгдлээ!", card });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── НЭГ КАРТ УСТГАХ ───
+// DELETE /api/flashcards/:id
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const card = await Flashcard.findByIdAndDelete(req.params.id);
+    if (!card) return res.status(404).json({ error: "Карт олдсонгүй" });
+    res.json({ message: "Карт устгагдлаа!" });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
 module.exports = router;

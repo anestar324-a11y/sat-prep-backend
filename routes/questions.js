@@ -100,4 +100,66 @@ router.post("/check", auth, async (req, res) => {
   }
 });
 
+// ─── АСУУЛТ НЭМЭХ (Admin) ───
+// POST /api/questions
+router.post("/", auth, async (req, res) => {
+  try {
+    const { section, topic, topicName, difficulty, questionText, passage, imageUrl, options, correctAnswer, explanation, practiceTestId, emoji } = req.body;
+    const question = await Question.create({
+      section, topic, topicName, difficulty, questionText,
+      passage: passage || null,
+      imageUrl: imageUrl || null,
+      options,
+      correctAnswer,
+      explanation,
+      practiceTestId: practiceTestId || null,
+      emoji: emoji || "📝",
+    });
+    res.status(201).json({ message: "Асуулт нэмэгдлээ!", question });
+  } catch (error) {
+    console.error("Асуулт нэмэх алдаа:", error);
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── БҮХ АСУУЛТУУД (Admin жагсаалт) ───
+// GET /api/questions/admin/all
+router.get("/admin/all", auth, async (req, res) => {
+  try {
+    const { section, topic, difficulty, limit = 50 } = req.query;
+    const filter = {};
+    if (section) filter.section = section;
+    if (topic) filter.topic = topic;
+    if (difficulty) filter.difficulty = difficulty;
+    const questions = await Question.find(filter).sort({ section: 1, topic: 1 }).limit(parseInt(limit));
+    res.json({ questions });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── АСУУЛТ ЗАСАХ ───
+// PUT /api/questions/:id
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const question = await Question.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!question) return res.status(404).json({ error: "Асуулт олдсонгүй" });
+    res.json({ message: "Асуулт шинэчлэгдлээ!", question });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── АСУУЛТ УСТГАХ ───
+// DELETE /api/questions/:id
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const question = await Question.findByIdAndDelete(req.params.id);
+    if (!question) return res.status(404).json({ error: "Асуулт олдсонгүй" });
+    res.json({ message: "Асуулт устгагдлаа!" });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
 module.exports = router;
