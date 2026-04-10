@@ -4,7 +4,6 @@ const newsSchema = new mongoose.Schema(
   {
     category: {
       type: String,
-      enum: ["tips", "news", "strategy"],
       required: true,
     },
     categoryLabel: {
@@ -28,6 +27,10 @@ const newsSchema = new mongoose.Schema(
       default: "3 мин",
     },
     pinned: {
+      type: Boolean,
+      default: false,
+    },
+    published: {
       type: Boolean,
       default: false,
     },
