@@ -204,4 +204,88 @@ router.put("/password", auth, async (req, res) => {
   }
 });
 
+// ─── НУУЦ ҮГ МАРТСАН - КОД ИЛГЭЭХ ───
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Имэйл оруулна уу" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "Энэ имэйлтэй хэрэглэгч олдсонгүй" });
+
+    // 6 оронтой санамсаргүй код үүсгэх
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 минут
+
+    user.resetPasswordCode = code;
+    user.resetPasswordExpiry = expiry;
+    await user.save();
+
+    // Имэйл илгээх (EMAIL_USER болон EMAIL_PASS тохируулагдсан үед)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+        });
+        await transporter.sendMail({
+          from: `"SATPrep" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: "SATPrep - Нууц үг сэргээх код",
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border-radius:12px;border:1px solid #e5e7eb">
+              <h2 style="color:#3B6BF5">SATPrep — Нууц үг сэргээх</h2>
+              <p>Таны нууц үг сэргээх код:</p>
+              <div style="font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;padding:24px;background:#EBF0FF;border-radius:8px;color:#3B6BF5">${code}</div>
+              <p style="color:#6B7280;font-size:13px;margin-top:16px">Код 15 минутын дотор хүчинтэй. Хэрэв та нууц үг сэргээх хүсэлт гаргаагүй бол энэ имэйлийг үл тоомсорлоно уу.</p>
+            </div>
+          `,
+        });
+        return res.json({ message: `Ресет код ${email} имэйл рүү илгээгдлээ. 15 минутын дотор ашиглана уу.` });
+      } catch (emailErr) {
+        console.error("Имэйл илгээхэд алдаа:", emailErr.message);
+      }
+    }
+
+    // Имэйл тохируулагдаагүй үед консол дээр харуулах (хөгжүүлэлтийн горим)
+    console.log(`[SATPrep] Нууц үг ресет код (${email}): ${code}`);
+    res.json({ message: `Ресет код ${email} рүү илгээгдлээ. 15 минутын дотор ашиглана уу.` });
+  } catch (error) {
+    console.error("Forgot password алдаа:", error);
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
+// ─── НУУЦ ҮГ РЕСЕТ ХИЙХ ───
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) return res.status(400).json({ error: "Бүх талбарыг бөглөнө үү" });
+    if (newPassword.length < 6) return res.status(400).json({ error: "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой" });
+
+    const user = await User.findOne({ email }).select("+resetPasswordCode");
+    if (!user) return res.status(404).json({ error: "Хэрэглэгч олдсонгүй" });
+
+    if (!user.resetPasswordCode || user.resetPasswordCode !== code) {
+      return res.status(400).json({ error: "Ресет код буруу байна" });
+    }
+    if (!user.resetPasswordExpiry || user.resetPasswordExpiry < new Date()) {
+      return res.status(400).json({ error: "Ресет кодын хугацаа дууссан байна. Дахин авна уу." });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordCode = null;
+    user.resetPasswordExpiry = null;
+    await user.save();
+
+    res.json({ message: "Нууц үг амжилттай солигдлоо!" });
+  } catch (error) {
+    console.error("Reset password алдаа:", error);
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
 module.exports = router;

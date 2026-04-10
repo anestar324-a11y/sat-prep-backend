@@ -60,6 +60,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    resetPasswordCode: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetPasswordExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true, // createdAt, updatedAt автоматаар нэмнэ
