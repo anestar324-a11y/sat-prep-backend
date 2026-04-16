@@ -29,6 +29,16 @@ const videoLessonSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Суралцах зорилгууд (bullet points)
+    objectives: {
+      type: [String],
+      default: [],
+    },
+    // Хичээлийн текст агуулга (markdown-like)
+    lessonText: {
+      type: String,
+      default: "",
+    },
     // Хичээлийн дугаар (эрэмбэлэхэд)
     order: {
       type: Number,

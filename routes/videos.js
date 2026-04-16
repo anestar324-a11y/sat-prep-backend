@@ -90,7 +90,7 @@ router.get("/:id", auth, async (req, res) => {
 // POST /api/videos
 router.post("/", auth, async (req, res) => {
   try {
-    const { title, description, youtubeId, section, topic, topicName, order, duration, difficulty, isFree, published } = req.body;
+    const { title, description, youtubeId, section, topic, topicName, order, duration, difficulty, isFree, published, objectives, lessonText } = req.body;
 
     // YouTube thumbnail автоматаар авах
     const thumbnail = `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`;
@@ -108,6 +108,8 @@ router.post("/", auth, async (req, res) => {
       isFree,
       published: published !== false,
       thumbnail,
+      objectives: objectives || [],
+      lessonText: lessonText || "",
     });
 
     res.status(201).json({ message: "Видео нэмэгдлээ!", video });
