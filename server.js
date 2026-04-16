@@ -8,9 +8,26 @@ const app = express();
 
 // ─── Middleware ───
 app.use(express.json());
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      // Allow any Vercel deployment URL or explicitly listed origins
+      if (
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Allow all for now — tighten after confirming frontend URL
+    },
     credentials: true,
   })
 );
