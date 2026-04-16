@@ -115,7 +115,12 @@ router.post("/", auth, async (req, res) => {
     res.status(201).json({ message: "Видео нэмэгдлээ!", video });
   } catch (error) {
     console.error("Видео нэмэх алдаа:", error);
-    res.status(500).json({ error: "Серверийн алдаа" });
+    // Return descriptive validation errors so frontend can show them
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map(e => e.message).join(", ");
+      return res.status(400).json({ error: messages });
+    }
+    res.status(500).json({ error: error.message || "Серверийн алдаа" });
   }
 });
 
