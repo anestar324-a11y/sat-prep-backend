@@ -53,6 +53,20 @@ router.get("/grouped", auth, async (req, res) => {
   }
 });
 
+// ─── БҮГД ВИДЕО (Admin - published эсэхийг харгалзахгүй) ───
+// GET /api/videos/admin/all
+router.get("/admin/all", auth, async (req, res) => {
+  try {
+    const { section } = req.query;
+    const filter = {};
+    if (section) filter.section = section;
+    const videos = await VideoLesson.find(filter).sort({ section: 1, topic: 1, order: 1 });
+    res.json({ videos });
+  } catch (error) {
+    res.status(500).json({ error: "Серверийн алдаа" });
+  }
+});
+
 // ─── НЭГ ВИДЕО ───
 // GET /api/videos/:id
 router.get("/:id", auth, async (req, res) => {
@@ -76,7 +90,7 @@ router.get("/:id", auth, async (req, res) => {
 // POST /api/videos
 router.post("/", auth, async (req, res) => {
   try {
-    const { title, description, youtubeId, section, topic, order, duration, difficulty, isFree } = req.body;
+    const { title, description, youtubeId, section, topic, topicName, order, duration, difficulty, isFree, published } = req.body;
 
     // YouTube thumbnail автоматаар авах
     const thumbnail = `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`;
@@ -87,10 +101,12 @@ router.post("/", auth, async (req, res) => {
       youtubeId,
       section,
       topic,
+      topicName: topicName || topic,
       order,
       duration,
       difficulty,
       isFree,
+      published: published !== false,
       thumbnail,
     });
 

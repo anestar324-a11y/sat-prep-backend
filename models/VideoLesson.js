@@ -25,6 +25,10 @@ const videoLessonSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    topicName: {
+      type: String,
+      default: "",
+    },
     // Хичээлийн дугаар (эрэмбэлэхэд)
     order: {
       type: Number,
